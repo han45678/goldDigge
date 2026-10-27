@@ -1,230 +1,504 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>圖文故事</title>
-    <!-- 引入 Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Swiper CSS CDN -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>供養與真愛</title>
+  <style>
+    :root {
+      --bg-page: #07090e;
+      --bg-article: #10131a;
+      --bg-quote: #161a24;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --accent-red: #e03e3e;
+      --border-color: #1f2430;
+    }
 
-        /* 確保輪播容器維持絕對的 1:1 正方形比例 */
-        .square-container {
-            position: relative;
-            width: 100%;
-            max-width: 768px;
-            aspect-ratio: 1 / 1;
-            margin: 0 auto;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        /* 自訂 Swiper 分頁圓點樣式 */
-        #dots-container .swiper-pagination-bullet {
-            width: 8px;
-            height: 8px;
-            background-color: rgba(255, 255, 255, 0.5);
-            opacity: 1;
-            border-radius: 9999px;
-            transition: all 0.3s ease;
-            margin: 0 3px !important;
-        }
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      font-family: "Noto Serif TC", "Songti TC", "PMingLiU", "PingFang TC", "Microsoft JhengHei", serif;
+      line-height: 2;
+      padding: 48px 20px;
+      -webkit-font-smoothing: antialiased;
+    }
 
-        #dots-container .swiper-pagination-bullet:hover {
-            background-color: rgba(255, 255, 255, 0.8);
-        }
+    /* 密碼鎖定畫面樣式 */
+    #auth-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: var(--bg-page);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
 
-        #dots-container .swiper-pagination-bullet-active {
-            width: 22px;
-            background-color: #ffffff;
-            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-        }
-    </style>
+    .auth-box {
+      background-color: var(--bg-article);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 40px 32px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+    }
+
+    .auth-box h2 {
+      font-size: 20px;
+      margin-bottom: 8px;
+      color: #ffffff;
+      letter-spacing: 1px;
+    }
+
+    .auth-box p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      text-align: center;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .auth-input {
+      width: 100%;
+      padding: 12px 16px;
+      background-color: var(--bg-quote);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-main);
+      font-size: 18px;
+      text-align: center;
+      letter-spacing: 6px;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .auth-input:focus {
+      border-color: var(--accent-red);
+    }
+
+    .auth-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--accent-red);
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: opacity 0.2s;
+    }
+
+    .auth-btn:hover {
+      opacity: 0.9;
+    }
+
+    .error-msg {
+      color: var(--accent-red);
+      font-size: 14px;
+      margin-top: 12px;
+      display: none;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    /* 文章區塊預設隱藏 */
+    .blog-container {
+      display: none;
+      max-width: 720px;
+      margin: 0 auto;
+      background-color: var(--bg-article);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 56px 48px;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+    }
+
+    header {
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 28px;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+      color: #ffffff;
+      line-height: 1.4;
+    }
+
+    .meta {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-family: system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.5px;
+    }
+
+    article section {
+      margin-bottom: 40px;
+      padding-bottom: 36px;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    article section:last-of-type {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    p {
+      font-size: 19px;
+      margin-bottom: 22px;
+      letter-spacing: 0.8px;
+      text-align: justify;
+    }
+
+    p:last-child {
+      margin-bottom: 0;
+    }
+
+    .hl {
+      color: var(--accent-red);
+      font-weight: 700;
+    }
+
+    .sub-note {
+      font-size: 16px;
+      color: #d1d5db;
+      background-color: var(--bg-quote);
+      border-left: 3px solid var(--accent-red);
+      padding: 14px 18px;
+      border-radius: 0 6px 6px 0;
+      margin: 18px 0;
+      line-height: 1.8;
+    }
+
+    .small-text {
+      font-size: 15px;
+      color: var(--text-muted);
+    }
+
+    .end-mark {
+      text-align: right;
+      font-size: 20px;
+      letter-spacing: 2px;
+      margin-top: 36px;
+      color: var(--text-main);
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 16px 12px;
+      }
+
+      .blog-container {
+        padding: 32px 22px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      p {
+        font-size: 17px;
+        text-align: left;
+      }
+
+      .sub-note {
+        font-size: 15px;
+        padding: 12px 14px;
+      }
+    }
+  </style>
 </head>
+<body>
 
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
-
-    <!-- 密碼輸入區塊 -->
-    <div id="auth-box" class="w-full max-w-sm bg-slate-800 p-6 rounded-2xl shadow-2xl border border-white/10 text-center">
-        <h2 class="text-xl font-bold mb-4">請輸入存取密碼</h2>
-        <input 
-            type="password" 
-            id="password-input" 
-            placeholder="請輸入密碼" 
-            class="w-full px-4 py-2.5 rounded-lg bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 mb-3 text-center tracking-widest text-lg"
-            autocomplete="off"
-        >
-        <p id="error-msg" class="text-rose-500 text-sm mb-3 hidden">密碼錯誤，請重新輸入</p>
-        <button 
-            id="submit-btn" 
-            class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white rounded-lg font-medium transition duration-200">
-            確認進入
-        </button>
+  <!-- 密碼驗證遮罩 -->
+  <div id="auth-overlay">
+    <div class="auth-box">
+      <h2>私密文章</h2>
+      <p>請輸入密碼以繼續閱讀</p>
+      <input type="password" id="pwd-input" class="auth-input" placeholder="••••" maxlength="10" autofocus>
+      <button id="pwd-btn" class="auth-btn">確認解鎖</button>
+      <div id="error-msg" class="error-msg">密碼錯誤，請重新輸入</div>
     </div>
+  </div>
 
-    <!-- 主輪播外框 -->
-    <main class="w-full max-w-[768px]" id="main" style="display: none;">
-        <div class="relative w-full group">
+  <!-- 文章主體 -->
+  <main class="blog-container" id="main-content">
+    <header>
+      <h1>《供養與真愛》</h1>
+    </header>
 
-            <!-- 左上角頁數指示器：手機版置於圖片左上方外側，電腦版 (md以上) 懸浮於左上角 -->
-            <div class="mb-3 md:mb-0 md:absolute md:top-4 md:left-4 z-20 inline-block bg-slate-800 md:bg-slate-900/70 backdrop-blur-md text-white px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold tracking-wider shadow-lg border border-white/10">
-                <span id="current-slide">1</span> / <span id="total-slides">17</span>
-            </div>
+    <article>
+      <!-- 01 -->
+      <section>
+        <p>我在某家公司擔任軟體工程師。</p>
+        <p>
+          她晚讀兩年，目前是台中某大學的夜校生。<br>
+          她四五月才剛跟前任分手。
+        </p>
+        <p>因為缺<span class="hl">愛</span>，陷入了一段<span class="hl">極度混亂</span>的關係。</p>
+        <p>她同時<span class="hl">周旋</span>在兩個互為朋友的男生（A男與B男）之間。</p>
+      </section>
 
-            <!-- Swiper 輪播主體 -->
-            <div id="carousel" class="swiper square-container rounded-2xl overflow-hidden shadow-2xl bg-slate-800 select-none">
-                <div class="swiper-wrapper">
-                    <!-- Slide 1 ~ 17 -->
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./1.jpeg" alt="pic 1" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./2.jpeg" alt="pic 2" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./3.jpeg" alt="pic 3" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./4.jpeg" alt="pic 4" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./5.jpeg" alt="pic 5" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./6.jpeg" alt="pic 6" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./7.jpeg" alt="pic 7" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./8.jpeg" alt="pic 8" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./9.jpeg" alt="pic 9" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./10.jpeg" alt="pic 10" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./11.jpeg" alt="pic 11" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./12.jpeg" alt="pic 12" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./13.jpeg" alt="pic 13" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./14.jpeg" alt="pic 14" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./15.jpeg" alt="pic 15" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./16.jpeg" alt="pic 16" class="w-full h-full object-contain">
-                    </div>
-                    <div class="swiper-slide flex items-center justify-center">
-                        <img src="./17.jpeg" alt="pic 17" class="w-full h-full object-contain">
-                    </div>
-                </div>
+      <!-- 02 -->
+      <section>
+        <p>
+          她跟A男才見過兩次面。<br>
+          有次她要去桃園外婆家，A男剛好在新北，提議順道載她。結果兩人在車上喝了酒，直接<span class="hl">發生了關係</span>，之後又曖昧出遊了幾次。
+        </p>
+        <p>
+          同時，不知情的B男開始<span class="hl">猛烈追求</span>她，甚至不斷暗示「想要有一個巨蟹座的<span class="hl">女朋友</span>」。
+        </p>
+      </section>
 
-                <!-- 電腦版左右切換按鈕 (手機版自動隱藏，避免遮擋) -->
-                <button id="prev-btn"
-                    class="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-slate-900/60 hover:bg-slate-900/90 text-white w-12 h-12 rounded-full items-center justify-center backdrop-blur-md transition-all duration-200 opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 shadow-lg border border-white/10 focus:outline-none"
-                    aria-label="上一張">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                </button>
+      <!-- 03 -->
+      <section>
+        <p>
+          她跑去向A男<span class="hl">確認</span>關係，被<span class="hl">拒絕</span>後，轉頭就無縫答應了B男的追求。
+        </p>
+        <p>
+          結果過沒多久，A男直接跑去跟B男攤牌兩人的事，要B男「<span class="hl">不要當小丑</span>」，
+        </p>
+        <p>這兩段關係<span class="hl">雙雙玩完</span>。</p>
+      </section>
 
-                <button id="next-btn"
-                    class="hidden md:flex absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-slate-900/60 hover:bg-slate-900/90 text-white w-12 h-12 rounded-full items-center justify-center backdrop-blur-md transition-all duration-200 opacity-0 group-hover:opacity-100 hover:scale-105 active:scale-95 shadow-lg border border-white/10 focus:outline-none"
-                    aria-label="下一張">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </button>
-            </div>
+      <!-- 04 -->
+      <section>
+        <p>七月時，因為我們生日同月、同星座，就約出來一起吃飯。</p>
+        <p>
+          見面的時候，她把這段<span class="hl">荒唐</span>事告訴我。<br>
+          我當時試著讓她明白，把<span class="hl">性</span>跟愛混為一談是不對的。沒搞清楚是不是真的愛對方，單單只是「<span class="hl">聊得來</span>」是一回事；
+        </p>
+        <p>
+          但外面的男人為了睡妳，是可以完全順著妳的，<br>
+          <span class="hl">千萬不要再這樣隨便亂來!!!</span>
+        </p>
+      </section>
 
-            <!-- 底部圓點指示器：手機版置於圖片下方外側，電腦版 (md以上) 懸浮於底部中央 -->
-            <div class="mt-4 md:mt-0 md:absolute md:bottom-4 md:left-1/2 md:-translate-x-1/2 z-20 flex justify-center w-full md:w-auto">
-                <div id="dots-container"
-                    class="!w-auto !static flex flex-wrap items-center justify-center gap-y-1.5 bg-slate-800 md:bg-slate-900/40 backdrop-blur-md px-3.5 py-2 rounded-full border border-white/10">
-                </div>
-            </div>
+      <!-- 05 -->
+      <section>
+        <p>
+          其實我知道她的脾氣，知道她<span class="hl">不為人知</span>的一面，卻還是選擇<span class="hl">留</span>在她身旁。
+        </p>
+        <p>
+          出於善意，我<span class="hl">勸</span>她：<br>
+          「這些都算了，好好開始新生活。」
+        </p>
+        <p>
+          沒想到這句話，<br>
+          <span class="hl">成了一切錯誤的開始......</span>
+        </p>
+      </section>
 
+      <!-- 06 -->
+      <section>
+        <p>
+          我幫她繳學費、資助生活費、買日常物資，<span class="hl">情人節</span>帶她去吃王品的鐵板燒、經常帶她去吃飯，雖然學費她有說會還我，但掏錢的那一刻就<span class="hl">沒指望</span>她還。
+        </p>
+        <p>
+          為了站在她身邊<span class="hl">不顯老</span>，我對自己下<span class="hl">狠</span>手：瘋狂瘦身、肌肉量鍛鍊到65%以上<span class="hl">還做了醫美</span>、接髮。
+        </p>
+      </section>
+
+      <!-- 07 -->
+      <section>
+        <p>
+          也就是有這些改變，身邊出現其他<span class="hl">異</span>性時，她還會在ㄧ旁挑<span class="hl">刺</span>說「那個<span class="hl">不好</span>、這個<span class="hl">不好</span>」。
+        </p>
+        <p>
+          而我也<span class="hl">守死</span>界線，只願意認識、不<span class="hl">給</span>進一步機會。
+        </p>
+        <p>
+          我晚上的休息時間幾乎都<span class="hl">沒</span>了。但適逢她暑假，我還是願意擠出<span class="hl">僅剩</span>的時間陪她。
+        </p>
+        <p>我把<span class="hl">最好的狀態跟資源全給了她</span>。</p>
+      </section>
+
+      <!-- 08 -->
+      <section>
+        <p>但胃口養大後，<span class="hl">荒謬</span>的事來了。</p>
+        <p>
+          她跟<span class="hl">交友軟體</span>認識的男生去<span class="hl">開房間</span>過夜，理由竟然是：「對方晚上要上夜班不想去，又不想讓家裡知道，我就跟他開車去外面<span class="hl">亂</span>逛，然後開一間房，我們只是<span class="hl">單純看</span>Netflix。」
+        </p>
+        <p>
+          我主張這種事說出去<span class="hl">沒人會信</span>，<br>
+          <span class="hl">她當下說我「太傳統」。</span>
+        </p>
+      </section>
+
+      <!-- 09 -->
+      <section>
+        <p>後續她還傳了一支Reels <span class="hl">教育</span>我，影片裡說：</p>
+        <div class="sub-note">
+          「以前我覺得<span class="hl">異性</span>約我就是對我<span class="hl">有意思?</span> 我最近生日跟網友去看展、做蛋糕，發現<span class="hl">單獨出去</span>真的可以就只是單獨出去」
         </div>
-    </main>
+        <p>
+          她竟然試圖用這種邏輯，來<span class="hl">合理化</span>她跟網友大半夜去<span class="hl">開</span>房間的行為...
+        </p>
+        <p>
+          這讓我意識到<span class="hl">她根本改不了！</span>我一度想<span class="hl">離開</span>，她卻說：「<span class="hl">不行!要陪我!</span>」<br>
+          隔天又傳了一大串<span class="hl">道歉</span>文字訊息，後續又把我約我出來，鬧脾氣問<span class="hl">為什麼?</span>
+        </p>
+      </section>
 
-    <!-- 引入 Swiper JS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+      <!-- 10 -->
+      <section>
+        <p>
+          她曾跟我說過，想要「<span class="hl">放心做自己，不想被任何人管</span>」。
+        </p>
+        <p>所以我也不太去<span class="hl">約束</span>她。</p>
+        <p>
+          但<span class="hl">諷刺</span>的是，她的「<span class="hl">做自己</span>」每一刻都需要<span class="hl">錢</span>。
+        </p>
+        <p>
+          我以為她要的是我，但她<span class="hl">其實</span>只是要人供養她，
+        </p>
+        <p>
+          <span class="hl">最後</span> 她卻選擇了一個剛<span class="hl">認識不久</span>的人。
+        </p>
+      </section>
 
-    <!-- 驗證與 Swiper 初始化邏輯 -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const authBox = document.getElementById('auth-box');
-            const mainContent = document.getElementById('main');
-            const passwordInput = document.getElementById('password-input');
-            const submitBtn = document.getElementById('submit-btn');
-            const errorMsg = document.getElementById('error-msg');
-            const currentSlideEl = document.getElementById('current-slide');
-            const totalSlidesEl = document.getElementById('total-slides');
+      <!-- 11 -->
+      <section>
+        <p>
+          十月底，<span class="hl">約好帶她</span>去香港看她最喜歡的歌手，準備了VIP搖滾區門票，機票、住宿<span class="hl">我</span>全額資助。
+        </p>
+        <p>
+          一切<span class="hl">看似</span>正常，直到中秋節<span class="hl">前夕</span>。<br>
+          原本<span class="hl">說好</span>要一起來我公司附近吃午餐，結果她<span class="hl">突然改口</span>，說忘記跟「<span class="hl">朋友</span>」有約。
+        </p>
+      </section>
 
-            let swiperInstance = null;
+      <!-- 12 -->
+      <section>
+        <p>
+          當天下午，她<span class="hl">發了</span>限時快照，畫面裡單獨拍著一個<span class="hl">男</span>生，穿著短袖、短褲配涼鞋。
+        </p>
+        <p>
+          <span class="hl">諷刺</span>的是，她以前說過，絕對不能接受男生穿這樣約會。
+        </p>
+        <p>
+          我直接問對方是誰，她<span class="hl">毫不避諱</span>地回應：「<span class="hl">男友</span>」<br>
+          <span class="small-text">（那一天剛<span class="hl">確定關係</span>的）</span>
+        </p>
+        <div class="sub-note">
+          （<span class="hl">我當下直接提出：我不去了，請她男友補買自己的機票陪妳去，同時段飛機一直有票。結論是對方沒辦法負擔！！！</span>）
+        </div>
+        <p class="small-text">
+          另外在這之前，我突然看不到她的IG精選與文章! 看似被限制了!
+        </p>
+      </section>
 
-            function initSwiper() {
-                if (swiperInstance) return;
+      <!-- 13 -->
+      <section>
+        <p>
+          更<span class="hl">荒謬</span>的是，她還說這位新男友，大度地表示：「他會介意，但他說我是因為想去看演唱會的目的，所以他沒關係！」
+        </p>
+        <p>
+          當我<span class="hl">戳破</span>這一切並<span class="hl">嚴正主張</span>「<span class="hl">我不能帶別人的女朋友單獨出國</span>」時——
+        </p>
+        <p>
+          她為了能<span class="hl">繼續</span>去香港，居然<span class="hl">毫不猶豫</span>地回我一句：「<span class="hl">那我跟對方說，晚一點再在一起。</span>」
+        </p>
+      </section>
 
-                swiperInstance = new Swiper('#carousel', {
-                    loop: true,
-                    speed: 400,
-                    grabCursor: true,
-                    keyboard: {
-                        enabled: true,
-                    },
-                    navigation: {
-                        nextEl: '#next-btn',
-                        prevEl: '#prev-btn',
-                    },
-                    pagination: {
-                        el: '#dots-container',
-                        clickable: true,
-                    },
-                    on: {
-                        init: function () {
-                            totalSlidesEl.textContent = this.slides.length;
-                            currentSlideEl.textContent = this.realIndex + 1;
-                        },
-                        slideChange: function () {
-                            currentSlideEl.textContent = this.realIndex + 1;
-                        }
-                    }
-                });
-            }
+      <!-- 14 -->
+      <section>
+        <p>
+          她不僅毫無歉意，反而怪我「<span class="hl">搞她心態</span>」，抱怨這場演唱會她<span class="hl">期待</span>很久。
+        </p>
+        <p>
+          我以前<span class="hl">確實說過</span>想帶她去很多國家<span class="hl">玩</span>，結果她卻拿這點來<span class="hl">情緒勒索</span>，理直氣壯地反<span class="hl">咬</span>我：<br>
+          「<span class="hl">當初是你自己說要帶我去的啊！</span>」
+        </p>
+      </section>
 
-            function checkPassword() {
-                if (passwordInput.value.trim() === '0717') {
-                    authBox.style.display = 'none';
-                    mainContent.style.display = 'block';
-                    initSwiper();
-                } else {
-                    errorMsg.classList.remove('hidden');
-                    passwordInput.value = '';
-                    passwordInput.focus();
-                }
-            }
+      <!-- 15 -->
+      <section>
+        <p>
+          為了合理化自己的<span class="hl">自私</span>，她甚至不斷偷換概念，反問我：「<span class="hl">難道以後跟朋友出國，還要先確定對方是不是喜歡我嗎？</span>」
+        </p>
+        <p>
+          我直接反問：<br>
+          「哪個『<span class="hl">朋友</span>』會<span class="hl">免費</span>帶妳出國？」
+        </p>
+        <p>
+          <span class="hl">結果</span>她直接完全<span class="hl">不回應</span>這句話。
+        </p>
+      </section>
 
-            submitBtn.addEventListener('click', checkPassword);
-            passwordInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') checkPassword();
-            });
-        });
-    </script>
+      <!-- 16 -->
+      <section>
+        <p>整件事看下來，我只覺得她<span class="hl">極度自私</span>。</p>
+        <p>
+          她要的根本不是<span class="hl">愛</span>，只是要別人<span class="hl">無條件</span>順著她；只要對方聊天<span class="hl">投機</span>、願意<span class="hl">迎合</span>，她就覺得那是<span class="hl">真愛</span>，簡直<span class="hl">荒唐至極</span>。
+        </p>
+        <p>
+          享受著我的<span class="hl">生活品質與資源</span>，談戀愛卻找別人；為了出國玩，甚至能把交往當成隨時可延後的<span class="hl">籌碼</span>。<br>
+          這<span class="hl">真的讓我徹底看不懂！</span>
+        </p>
+      </section>
+
+      <!-- 17 -->
+      <section>
+        <p>
+          我們從沒有<span class="hl">吵架</span>過，這是<span class="hl">第一次</span>，也是<span class="hl">最後一次</span>。
+        </p>
+        <p>
+          我想她只會覺得自己很委屈，不認為自己有什麼問題？
+        </p>
+        <p>
+          現在，我看著那些不能<span class="hl">取消修改</span>的機票、飯店和演唱會門票，
+        </p>
+        <p>
+          <span class="hl">不知道怎麼面對這一切...</span>
+        </p>
+        <div class="end-mark">—— END ——</div>
+      </section>
+    </article>
+  </main>
+
+  <script>
+    const pwdInput = document.getElementById('pwd-input');
+    const pwdBtn = document.getElementById('pwd-btn');
+    const errorMsg = document.getElementById('error-msg');
+    const authOverlay = document.getElementById('auth-overlay');
+    const mainContent = document.getElementById('main-content');
+
+    function checkPassword() {
+      if (pwdInput.value === '0717') {
+        authOverlay.style.display = 'none';
+        mainContent.style.display = 'block';
+      } else {
+        errorMsg.style.display = 'block';
+        pwdInput.value = '';
+        pwdInput.focus();
+      }
+    }
+
+    pwdBtn.addEventListener('click', checkPassword);
+
+    pwdInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        checkPassword();
+      }
+    });
+  </script>
+
 </body>
-
 </html>
