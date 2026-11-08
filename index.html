@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>供養與真愛</title>
+  <!-- 引入 html2canvas 供產生與下載多張 A4 圖卡使用 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     :root {
       --bg-page: #07090e;
@@ -12,6 +14,7 @@
       --text-main: #f3f4f6;
       --text-muted: #9ca3af;
       --accent-red: #e03e3e;
+      --accent-gold: #f59e0b;
       --border-color: #1f2430;
     }
 
@@ -25,9 +28,43 @@
       background-color: var(--bg-page);
       color: var(--text-main);
       font-family: "Noto Serif TC", "Songti TC", "PMingLiU", "PingFang TC", "Microsoft JhengHei", serif;
-      line-height: 2;
-      padding: 48px 20px;
+      line-height: 1.9;
+      padding: 72px 20px 48px;
       -webkit-font-smoothing: antialiased;
+    }
+
+    /* 右上方下載按鈕（解鎖後顯示） */
+    #download-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9000;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background-color: var(--accent-red);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: system-ui, -apple-system, sans-serif;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
+      transition: transform 0.2s, opacity 0.2s, background-color 0.2s;
+    }
+
+    #download-btn:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    #download-btn:disabled {
+      background-color: #4b5563;
+      cursor: wait;
+      transform: none;
     }
 
     /* 密碼鎖定畫面樣式 */
@@ -113,55 +150,84 @@
       font-family: system-ui, -apple-system, sans-serif;
     }
 
-    /* 文章區塊預設隱藏 */
-    .blog-container {
+    /* 多張 A4 圖卡外層容器 */
+    .cards-wrapper {
       display: none;
-      max-width: 720px;
-      margin: 0 auto;
+      flex-direction: column;
+      align-items: center;
+      gap: 36px;
+    }
+
+    /* 單張標準 A4 圖卡（794px x 1123px = 210mm x 297mm @ 96DPI） */
+    .a4-card {
+      width: 794px;
+      height: 1123px;
       background-color: var(--bg-article);
       border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 56px 48px;
+      border-radius: 10px;
+      padding: 52px 56px 40px;
       box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 匯出時強制鎖定標準 A4 尺寸與直角 */
+    .cards-wrapper.exporting .a4-card {
+      width: 794px !important;
+      height: 1123px !important;
+      padding: 52px 56px 40px !important;
+      border-radius: 0 !important;
+    }
+
+    .card-body {
+      flex: 1;
     }
 
     header {
       border-bottom: 1px solid var(--border-color);
-      padding-bottom: 28px;
-      margin-bottom: 40px;
+      padding-bottom: 22px;
+      margin-bottom: 30px;
     }
 
-    h1 {
-      font-size: 28px;
+    header.sequel-header {
+      border-bottom-color: rgba(245, 158, 11, 0.35);
+    }
+
+    h1, h2.card-title {
+      font-size: 26px;
       font-weight: 700;
       letter-spacing: 1.5px;
-      margin-bottom: 10px;
       color: #ffffff;
       line-height: 1.4;
     }
 
-    .meta {
-      font-size: 14px;
+    .subtitle {
+      display: block;
+      font-size: 13px;
       color: var(--text-muted);
+      margin-top: 4px;
       font-family: system-ui, -apple-system, sans-serif;
-      letter-spacing: 0.5px;
+      letter-spacing: 1.5px;
     }
 
-    article section {
-      margin-bottom: 40px;
-      padding-bottom: 36px;
+    section {
+      margin-bottom: 28px;
+      padding-bottom: 26px;
       border-bottom: 1px dashed var(--border-color);
     }
 
-    article section:last-of-type {
+    section:last-of-type {
       border-bottom: none;
       margin-bottom: 0;
       padding-bottom: 0;
     }
 
     p {
-      font-size: 19px;
-      margin-bottom: 22px;
+      font-size: 18px;
+      margin-bottom: 16px;
       letter-spacing: 0.8px;
       text-align: justify;
     }
@@ -175,15 +241,24 @@
       font-weight: 700;
     }
 
+    .hl-warm {
+      color: var(--accent-gold);
+      font-weight: 700;
+    }
+
     .sub-note {
-      font-size: 16px;
+      font-size: 15.5px;
       color: #d1d5db;
       background-color: var(--bg-quote);
       border-left: 3px solid var(--accent-red);
-      padding: 14px 18px;
+      padding: 12px 16px;
       border-radius: 0 6px 6px 0;
-      margin: 18px 0;
-      line-height: 1.8;
+      margin: 14px 0;
+      line-height: 1.75;
+    }
+
+    .sub-note.warm {
+      border-left-color: var(--accent-gold);
     }
 
     .small-text {
@@ -193,22 +268,45 @@
 
     .end-mark {
       text-align: right;
-      font-size: 20px;
+      font-size: 19px;
       letter-spacing: 2px;
       margin-top: 36px;
       color: var(--text-main);
     }
 
-    @media (max-width: 768px) {
+    .card-footer {
+      border-top: 1px solid var(--border-color);
+      padding-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-family: system-ui, -apple-system, sans-serif;
+      letter-spacing: 1px;
+    }
+
+    /* 手機版預覽自適應（下載時會自動切換回標準 A4 794x1123） */
+    @media (max-width: 840px) {
       body {
-        padding: 16px 12px;
+        padding: 68px 12px 32px;
       }
 
-      .blog-container {
-        padding: 32px 22px;
+      #download-btn {
+        top: 12px;
+        right: 12px;
+        padding: 8px 14px;
+        font-size: 14px;
       }
 
-      h1 {
+      .a4-card {
+        width: 100%;
+        height: auto;
+        min-height: 520px;
+        padding: 32px 22px 24px;
+      }
+
+      h1, h2.card-title {
         font-size: 22px;
       }
 
@@ -226,6 +324,9 @@
 </head>
 <body>
 
+  <!-- 右上方下載按鈕 -->
+  <button id="download-btn" type="button">⬇ 下載全部 A4 圖卡 (共 7 張)</button>
+
   <!-- 密碼驗證遮罩 -->
   <div id="auth-overlay">
     <div class="auth-box">
@@ -237,243 +338,389 @@
     </div>
   </div>
 
-  <!-- 文章主體 -->
-  <main class="blog-container" id="main-content">
-    <header>
-      <h1>《供養與真愛》</h1>
-    </header>
+  <!-- 多張 A4 圖卡容器 -->
+  <main class="cards-wrapper" id="main-content">
 
-    <article>
-      <!-- 01 -->
-      <section>
-        <p>我在某家公司擔任軟體工程師。</p>
-        <p>
-          她晚讀兩年，目前是台中某大學的夜校生。<br>
-          她四五月才剛跟前任分手。
-        </p>
-        <p>因為缺<span class="hl">愛</span>，陷入了一段<span class="hl">極度混亂</span>的關係。</p>
-        <p>她同時<span class="hl">周旋</span>在兩個互為朋友的男生（A男與B男）之間。</p>
-      </section>
+    <!-- ==================== 第 1 張 A4 圖卡 ==================== -->
+    <article class="a4-card">
+      <div class="card-body">
+        <header>
+          <h1>《供養與真愛》</h1>
+        </header>
 
-      <!-- 02 -->
-      <section>
-        <p>
-          她跟A男才見過兩次面。<br>
-          有次她要去桃園外婆家，A男剛好在新北，提議順道載她。結果兩人在車上喝了酒，直接<span class="hl">發生了關係</span>，之後又曖昧出遊了幾次。
-        </p>
-        <p>
-          同時，不知情的B男開始<span class="hl">猛烈追求</span>她，甚至不斷暗示「想要有一個巨蟹座的<span class="hl">女朋友</span>」。
-        </p>
-      </section>
+        <!-- 01 -->
+        <section>
+          <p>我在某家公司擔任軟體工程師。</p>
+          <p>
+            她晚讀兩年，目前是台中某大學的夜校生。<br>
+            她四五月才剛跟前任分手。
+          </p>
+          <p>因為缺<span class="hl">愛</span>，陷入了一段<span class="hl">極度混亂</span>的關係。</p>
+          <p>她同時<span class="hl">周旋</span>在兩個互為朋友的男生（A男與B男）之間。</p>
+        </section>
 
-      <!-- 03 -->
-      <section>
-        <p>
-          她跑去向A男<span class="hl">確認</span>關係，被<span class="hl">拒絕</span>後，轉頭就無縫答應了B男的追求。
-        </p>
-        <p>
-          結果過沒多久，A男直接跑去跟B男攤牌兩人的事，要B男「<span class="hl">不要當小丑</span>」，
-        </p>
-        <p>這兩段關係<span class="hl">雙雙玩完</span>。</p>
-      </section>
+        <!-- 02 -->
+        <section>
+          <p>
+            她跟A男才見過兩次面。<br>
+            有次她要去桃園外婆家，A男剛好在新北，提議順道載她。結果兩人在車上喝了酒，直接<span class="hl">發生了關係</span>，之後又曖昧出遊了幾次。
+          </p>
+          <p>
+            同時，不知情的B男開始<span class="hl">猛烈追求</span>她，甚至不斷暗示「想要有一個巨蟹座的<span class="hl">女朋友</span>」。
+          </p>
+        </section>
 
-      <!-- 04 -->
-      <section>
-        <p>七月時，因為我們生日同月、同星座，就約出來一起吃飯。</p>
-        <p>
-          見面的時候，她把這段<span class="hl">荒唐</span>事告訴我。<br>
-          我當時試著讓她明白，把<span class="hl">性</span>跟愛混為一談是不對的。沒搞清楚是不是真的愛對方，單單只是「<span class="hl">聊得來</span>」是一回事；
-        </p>
-        <p>
-          但外面的男人為了睡妳，是可以完全順著妳的，<br>
-          <span class="hl">千萬不要再這樣隨便亂來!!!</span>
-        </p>
-      </section>
+        <!-- 03 -->
+        <section>
+          <p>
+            她跑去向A男<span class="hl">確認</span>關係，被<span class="hl">拒絕</span>後，轉頭就無縫答應了B男的追求。
+          </p>
+          <p>
+            結果過沒多久，A男直接跑去跟B男攤牌兩人的事，要B男「<span class="hl">不要當小丑</span>」，
+          </p>
+          <p>這兩段關係<span class="hl">雙雙玩完</span>。</p>
+        </section>
 
-      <!-- 05 -->
-      <section>
-        <p>
-          其實我知道她的脾氣，知道她<span class="hl">不為人知</span>的一面，卻還是選擇<span class="hl">留</span>在她身旁。
-        </p>
-        <p>
-          出於善意，我<span class="hl">勸</span>她：<br>
-          「這些都算了，好好開始新生活。」
-        </p>
-        <p>
-          沒想到這句話，<br>
-          <span class="hl">成了一切錯誤的開始......</span>
-        </p>
-      </section>
-
-      <!-- 06 -->
-      <section>
-        <p>
-          我幫她繳學費、資助生活費、買日常物資，<span class="hl">情人節</span>帶她去吃王品的鐵板燒、經常帶她去吃飯，雖然學費她有說會還我，但掏錢的那一刻就<span class="hl">沒指望</span>她還。
-        </p>
-        <p>
-          為了站在她身邊<span class="hl">不顯老</span>，我對自己下<span class="hl">狠</span>手：瘋狂瘦身、肌肉量鍛鍊到65%以上<span class="hl">還做了醫美</span>、接髮。
-        </p>
-      </section>
-
-      <!-- 07 -->
-      <section>
-        <p>
-          也就是有這些改變，身邊出現其他<span class="hl">異</span>性時，她還會在ㄧ旁挑<span class="hl">刺</span>說「那個<span class="hl">不好</span>、這個<span class="hl">不好</span>」。
-        </p>
-        <p>
-          而我也<span class="hl">守死</span>界線，只願意認識、不<span class="hl">給</span>進一步機會。
-        </p>
-        <p>
-          我晚上的休息時間幾乎都<span class="hl">沒</span>了。但適逢她暑假，我還是願意擠出<span class="hl">僅剩</span>的時間陪她。
-        </p>
-        <p>我把<span class="hl">最好的狀態跟資源全給了她</span>。</p>
-      </section>
-
-      <!-- 08 -->
-      <section>
-        <p>但胃口養大後，<span class="hl">荒謬</span>的事來了。</p>
-        <p>
-          她跟<span class="hl">交友軟體</span>認識的男生去<span class="hl">開房間</span>過夜，理由竟然是：「對方晚上要上夜班不想去，又不想讓家裡知道，我就跟他開車去外面<span class="hl">亂</span>逛，然後開一間房，我們只是<span class="hl">單純看</span>Netflix。」
-        </p>
-        <p>
-          我主張這種事說出去<span class="hl">沒人會信</span>，<br>
-          <span class="hl">她當下說我「太傳統」。</span>
-        </p>
-      </section>
-
-      <!-- 09 -->
-      <section>
-        <p>後續她還傳了一支Reels <span class="hl">教育</span>我，影片裡說：</p>
-        <div class="sub-note">
-          「以前我覺得<span class="hl">異性</span>約我就是對我<span class="hl">有意思?</span> 我最近生日跟網友去看展、做蛋糕，發現<span class="hl">單獨出去</span>真的可以就只是單獨出去」
-        </div>
-        <p>
-          她竟然試圖用這種邏輯，來<span class="hl">合理化</span>她跟網友大半夜去<span class="hl">開</span>房間的行為...
-        </p>
-        <p>
-          這讓我意識到<span class="hl">她根本改不了！</span>我一度想<span class="hl">離開</span>，她卻說：「<span class="hl">不行!要陪我!</span>」<br>
-          隔天又傳了一大串<span class="hl">道歉</span>文字訊息，後續又把我約我出來，鬧脾氣問<span class="hl">為什麼?</span>
-        </p>
-        <div class="sub-note">
-          另外在此之前我也一直強調過，我們不能一直這樣! 也表態多次了，只能再一起，不然就少見面一點。
-        </div>
-      </section>
-
-      <!-- 10 -->
-      <section>
-        <p>
-          她曾跟我說過，想要「<span class="hl">放心做自己，不想被任何人管</span>」。
-        </p>
-        <p>所以我也不太去<span class="hl">約束</span>她。</p>
-        <p>
-          但<span class="hl">諷刺</span>的是，她的「<span class="hl">做自己</span>」每一刻都需要<span class="hl">錢</span>。
-        </p>
-        <p>
-          我以為她要的是我，但她<span class="hl">其實</span>只是要人供養她，
-        </p>
-        <p>
-          <span class="hl">最後</span> 她卻選擇了一個剛<span class="hl">認識不久</span>的人。
-        </p>
-      </section>
-
-      <!-- 11 -->
-      <section>
-        <p>
-          十月底，<span class="hl">約好帶她</span>去香港看她最喜歡的歌手，準備了VIP搖滾區門票，機票、住宿<span class="hl">我</span>全額資助。
-        </p>
-        <p>
-          一切<span class="hl">看似</span>正常，直到中秋節<span class="hl">前夕</span>。<br>
-          原本<span class="hl">說好</span>要一起來我公司附近吃午餐，結果她<span class="hl">突然改口</span>，說忘記跟「<span class="hl">朋友</span>」有約。
-        </p>
-      </section>
-
-      <!-- 12 -->
-      <section>
-        <p>
-          當天下午，她<span class="hl">發了</span>限時快照，畫面裡單獨拍著一個<span class="hl">男</span>生，穿著短袖、短褲配涼鞋。
-        </p>
-        <p>
-          <span class="hl">諷刺</span>的是，她以前說過，絕對不能接受男生穿這樣約會。
-        </p>
-        <p>
-          我直接問對方是誰，她<span class="hl">毫不避諱</span>地回應：「<span class="hl">男友</span>」<br>
-          <span class="small-text">（那一天剛<span class="hl">確定關係</span>的）</span>
-        </p>
-        <div class="sub-note">
-          （<span class="hl">我當下直接提出：我不去了，請她男友補買自己的機票陪妳去，同時段飛機一直有票。結論是對方沒辦法負擔！！！</span>）
-        </div>
-        <p class="small-text">
-          另外在這之前，我突然看不到她的IG精選與文章! 看似被限制了!
-        </p>
-      </section>
-
-      <!-- 13 -->
-      <section>
-        <p>
-          更<span class="hl">荒謬</span>的是，她還說這位新男友，大度地表示：「他會介意，但他說我是因為想去看演唱會的目的，所以他沒關係！」
-        </p>
-        <p>
-          當我<span class="hl">戳破</span>這一切並<span class="hl">嚴正主張</span>「<span class="hl">我不能帶別人的女朋友單獨出國</span>」時——
-        </p>
-        <p>
-          她為了能<span class="hl">繼續</span>去香港，居然<span class="hl">毫不猶豫</span>地回我一句：「<span class="hl">那我跟對方說，晚一點再在一起。</span>」
-        </p>
-      </section>
-
-      <!-- 14 -->
-      <section>
-        <p>
-          她不僅毫無歉意，反而怪我「<span class="hl">搞她心態</span>」，抱怨這場演唱會她<span class="hl">期待</span>很久。
-        </p>
-        <p>
-          我以前<span class="hl">確實說過</span>想帶她去很多國家<span class="hl">玩</span>，結果她卻拿這點來<span class="hl">情緒勒索</span>，理直氣壯地反<span class="hl">咬</span>我：<br>
-          「<span class="hl">當初是你自己說要帶我去的啊！</span>」
-        </p>
-      </section>
-
-      <!-- 15 -->
-      <section>
-        <p>
-          為了合理化自己的<span class="hl">自私</span>，她甚至不斷偷換概念，反問我：「<span class="hl">難道以後跟朋友出國，還要先確定對方是不是喜歡我嗎？</span>」
-        </p>
-        <p>
-          我直接反問：<br>
-          「哪個『<span class="hl">朋友</span>』會<span class="hl">免費</span>帶妳出國？」
-        </p>
-        <p>
-          <span class="hl">結果</span>她直接完全<span class="hl">不回應</span>這句話。
-        </p>
-      </section>
-
-      <!-- 16 -->
-      <section>
-        <p>整件事看下來，我只覺得她<span class="hl">極度自私</span>。</p>
-        <p>
-          她要的根本不是<span class="hl">愛</span>，只是要別人<span class="hl">無條件</span>順著她；只要對方聊天<span class="hl">投機</span>、願意<span class="hl">迎合</span>，她就覺得那是<span class="hl">真愛</span>，簡直<span class="hl">荒唐至極</span>。
-        </p>
-        <p>
-          享受著我的<span class="hl">生活品質與資源</span>，談戀愛卻找別人；為了出國玩，甚至能把交往當成隨時可延後的<span class="hl">籌碼</span>。<br>
-          這<span class="hl">真的讓我徹底看不懂！</span>
-        </p>
-      </section>
-
-      <!-- 17 -->
-      <section>
-        <p>
-          我們從沒有<span class="hl">吵架</span>過，這是<span class="hl">第一次</span>，也是<span class="hl">最後一次</span>。
-        </p>
-        <p>
-          我想她只會覺得自己很委屈，不認為自己有什麼問題？
-        </p>
-        <p>
-          現在，我看著那些不能<span class="hl">取消修改</span>的機票、飯店和演唱會門票，
-        </p>
-        <p>
-          <span class="hl">不知道怎麼面對這一切...</span>
-        </p>
-        <div class="end-mark">—— END ——</div>
-      </section>
+        <!-- 04 -->
+        <section>
+          <p>七月時，因為我們生日同月、同星座，就約出來一起吃飯。</p>
+          <p>
+            見面的時候，她把這段<span class="hl">荒唐</span>事告訴我。<br>
+            我當時試著讓她明白，把<span class="hl">性</span>跟愛混為一談是不對的。沒搞清楚是不是真的愛對方，單單只是「<span class="hl">聊得來</span>」是一回事；
+          </p>
+          <p>
+            但外面的男人為了睡妳，是可以完全順著妳的，<br>
+            <span class="hl">千萬不要再這樣隨便亂來!!!</span>
+          </p>
+        </section>
+      </div>
+      <div class="card-footer">
+        <span>《供養與真愛》</span>
+        <span>1 / 7</span>
+      </div>
     </article>
+
+    <!-- ==================== 第 2 張 A4 圖卡 ==================== -->
+    <article class="a4-card">
+      <div class="card-body">
+        <!-- 05 -->
+        <section>
+          <p>
+            其實我知道她的脾氣，知道她<span class="hl">不為人知</span>的一面，卻還是選擇<span class="hl">留</span>在她身旁。
+          </p>
+          <p>
+            出於善意，我<span class="hl">勸</span>她：<br>
+            「這些都算了，好好開始新生活。」
+          </p>
+          <p>
+            沒想到這句話，<br>
+            <span class="hl">成了一切錯誤的開始......</span>
+          </p>
+        </section>
+
+        <!-- 06 -->
+        <section>
+          <p>
+            我幫她繳學費、資助生活費、買日常物資，<span class="hl">情人節</span>帶她去吃王品的鐵板燒、經常帶她去吃飯，雖然學費她有說會還我，但掏錢的那一刻就<span class="hl">沒指望</span>她還。
+          </p>
+          <p>
+            為了站在她身邊<span class="hl">不顯老</span>，我對自己下<span class="hl">狠</span>手：瘋狂瘦身、肌肉量鍛鍊到65%以上<span class="hl">還做了醫美</span>、接髮。
+          </p>
+        </section>
+
+        <!-- 07 -->
+        <section>
+          <p>
+            也就是有這些改變，身邊出現其他<span class="hl">異</span>性時，她還會在ㄧ旁挑<span class="hl">刺</span>說「那個<span class="hl">不好</span>、這個<span class="hl">不好</span>」。
+          </p>
+          <p>
+            而我也<span class="hl">守死</span>界線，只願意認識、不<span class="hl">給</span>進一步機會。
+          </p>
+          <p>
+            我晚上的休息時間幾乎都<span class="hl">沒</span>了。但適逢她暑假，我還是願意擠出<span class="hl">僅剩</span>的時間陪她。
+          </p>
+          <p>我把<span class="hl">最好的狀態跟資源全給了她</span>。</p>
+        </section>
+
+        <!-- 08 -->
+        <section>
+          <p>但胃口養大後，<span class="hl">荒謬</span>的事來了。</p>
+          <p>
+            她跟<span class="hl">交友軟體</span>認識的男生去<span class="hl">開房間</span>過夜，理由竟然是：「對方晚上要上夜班不想去，又不想讓家裡知道，我就跟他開車去外面<span class="hl">亂</span>逛，然後開一間房，我們只是<span class="hl">單純看</span>Netflix。」
+          </p>
+          <p>
+            我主張這種事說出去<span class="hl">沒人會信</span>，<br>
+            <span class="hl">她當下說我「太傳統」。</span>
+          </p>
+        </section>
+      </div>
+      <div class="card-footer">
+        <span>《供養與真愛》</span>
+        <span>2 / 7</span>
+      </div>
+    </article>
+
+    <!-- ==================== 第 3 張 A4 圖卡 ==================== -->
+    <article class="a4-card">
+      <div class="card-body">
+        <!-- 09 -->
+        <section>
+          <p>後續她還傳了一支Reels <span class="hl">教育</span>我，影片裡說：</p>
+          <div class="sub-note">
+            「以前我覺得<span class="hl">異性</span>約我就是對我<span class="hl">有意思?</span> 我最近生日跟網友去看展、做蛋糕，發現<span class="hl">單獨出去</span>真的可以就只是單獨出去」
+          </div>
+          <p>
+            她竟然試圖用這種邏輯，來<span class="hl">合理化</span>她跟網友大半夜去<span class="hl">開</span>房間的行為...
+          </p>
+          <p>
+            這讓我意識到<span class="hl">她根本改不了！</span>我一度想<span class="hl">離開</span>，她卻說：「<span class="hl">不行!要陪我!</span>」<br>
+            隔天又傳了一大串<span class="hl">道歉</span>文字訊息，後續又把我約我出來，鬧脾氣問<span class="hl">為什麼?</span>
+          </p>
+          <div class="sub-note">
+            另外在此之前我也一直強調過，我們不能一直這樣! 也表態多次了，只能再一起，不然就少見面一點。
+          </div>
+        </section>
+
+        <!-- 10 -->
+        <section>
+          <p>
+            她曾跟我說過，想要「<span class="hl">放心做自己，不想被任何人管</span>」。
+          </p>
+          <p>所以我也不太去<span class="hl">約束</span>她。</p>
+          <p>
+            但<span class="hl">諷刺</span>的是，她的「<span class="hl">做自己</span>」每一刻都需要<span class="hl">錢</span>。
+          </p>
+          <p>
+            我以為她要的是我，但她<span class="hl">其實</span>只是要人供養她，
+          </p>
+          <p>
+            <span class="hl">最後</span> 她卻選擇了一個剛<span class="hl">認識不久</span>的人。
+          </p>
+        </section>
+
+        <!-- 11 -->
+        <section>
+          <p>
+            十月底，<span class="hl">約好帶她</span>去香港看她最喜歡的歌手，準備了VIP搖滾區門票，機票、住宿<span class="hl">我</span>全額資助。
+          </p>
+          <p>
+            一切<span class="hl">看似</span>正常，直到中秋節<span class="hl">前夕</span>。<br>
+            原本<span class="hl">說好</span>要一起來我公司附近吃午餐，結果她<span class="hl">突然改口</span>，說忘記跟「<span class="hl">朋友</span>」有約。
+          </p>
+        </section>
+      </div>
+      <div class="card-footer">
+        <span>《供養與真愛》</span>
+        <span>3 / 7</span>
+      </div>
+    </article>
+
+    <!-- ==================== 第 4 張 A4 圖卡 ==================== -->
+    <article class="a4-card">
+      <div class="card-body">
+        <!-- 12 -->
+        <section>
+          <p>
+            當天下午，她<span class="hl">發了</span>限時快照，畫面裡單獨拍著一個<span class="hl">男</span>生，穿著短袖、短褲配涼鞋。
+          </p>
+          <p>
+            <span class="hl">諷刺</span>的是，她以前說過，絕對不能接受男生穿這樣約會。
+          </p>
+          <p>
+            我直接問對方是誰，她<span class="hl">毫不避諱</span>地回應：「<span class="hl">男友</span>」<br>
+            <span class="small-text">（那一天剛<span class="hl">確定關係</span>的）</span>
+          </p>
+          <div class="sub-note">
+            （<span class="hl">我當下直接提出：我不去了，請她男友補買自己的機票陪妳去，同時段飛機一直有票。結論是對方沒辦法負擔！！！</span>）
+          </div>
+          <p class="small-text">
+            另外在這之前，我突然看不到她的IG精選與文章! 看似被限制了!
+          </p>
+        </section>
+
+        <!-- 13 -->
+        <section>
+          <p>
+            更<span class="hl">荒謬</span>的是，她還說這位新男友，大度地表示：「他會介意，但他說我是因為想去看演唱會的目的，所以他沒關係！」
+          </p>
+          <p>
+            當我<span class="hl">戳破</span>這一切並<span class="hl">嚴正主張</span>「<span class="hl">我不能帶別人的女朋友單獨出國</span>」時——
+          </p>
+          <p>
+            她為了能<span class="hl">繼續</span>去香港，居然<span class="hl">毫不猶豫</span>地回我一句：「<span class="hl">那我跟對方說，晚一點再在一起。</span>」
+          </p>
+        </section>
+
+        <!-- 14 -->
+        <section>
+          <p>
+            她不僅毫無歉意，反而怪我「<span class="hl">搞她心態</span>」，抱怨這場演唱會她<span class="hl">期待</span>很久。
+          </p>
+          <p>
+            我以前<span class="hl">確實說過</span>想帶她去很多國家<span class="hl">玩</span>，結果她卻拿這點來<span class="hl">情緒勒索</span>，理直氣壯地反<span class="hl">咬</span>我：<br>
+            「<span class="hl">當初是你自己說要帶我去的啊！</span>」
+          </p>
+        </section>
+      </div>
+      <div class="card-footer">
+        <span>《供養與真愛》</span>
+        <span>4 / 7</span>
+      </div>
+    </article>
+
+    <!-- ==================== 第 5 張 A4 圖卡 ==================== -->
+    <article class="a4-card">
+      <div class="card-body">
+        <!-- 15 -->
+        <section>
+          <p>
+            為了合理化自己的<span class="hl">自私</span>，她甚至不斷偷換概念，反問我：「<span class="hl">難道以後跟朋友出國，還要先確定對方是不是喜歡我嗎？</span>」
+          </p>
+          <p>
+            我直接反問：<br>
+            「哪個『<span class="hl">朋友</span>』會<span class="hl">免費</span>帶妳出國？」
+          </p>
+          <p>
+            <span class="hl">結果</span>她直接完全<span class="hl">不回應</span>這句話。
+          </p>
+        </section>
+
+        <!-- 16 -->
+        <section>
+          <p>整件事看下來，我只覺得她<span class="hl">極度自私</span>。</p>
+          <p>
+            她要的根本不是<span class="hl">愛</span>，只是要別人<span class="hl">無條件</span>順著她；只要對方聊天<span class="hl">投機</span>、願意<span class="hl">迎合</span>，她就覺得那是<span class="hl">真愛</span>，簡直<span class="hl">荒唐至極</span>。
+          </p>
+          <p>
+            享受著我的<span class="hl">生活品質與資源</span>，談戀愛卻找別人；為了出國玩，甚至能把交往當成隨時可延後的<span class="hl">籌碼</span>。<br>
+            這<span class="hl">真的讓我徹底看不懂！</span>
+          </p>
+        </section>
+
+        <!-- 17 -->
+        <section>
+          <p>
+            我們從沒有<span class="hl">吵架</span>過，這是<span class="hl">第一次</span>，也是<span class="hl">最後一次</span>。
+          </p>
+          <p>
+            我想她只會覺得自己很委屈，不認為自己有什麼問題？
+          </p>
+          <p>
+            現在，我看著那些不能<span class="hl">取消修改</span>的機票、飯店和演唱會門票，
+          </p>
+          <p>
+            <span class="hl">不知道怎麼面對這一切...</span>
+          </p>
+        </section>
+      </div>
+      <div class="card-footer">
+        <span>《供養與真愛》</span>
+        <span>5 / 7</span>
+      </div>
+    </article>
+
+    <!-- ==================== 第 6 張 A4 圖卡（後續篇：初遇） ==================== -->
+    <article class="a4-card">
+      <div class="card-body">
+        <header class="sequel-header">
+          <h2 class="card-title">《後續：不期而遇的浪漫》</h2>
+          <span class="subtitle">EPILOGUE</span>
+        </header>
+
+        <!-- 18 -->
+        <section>
+          <p>
+            最後，我決定收拾心情，獨自前往<span class="hl-warm">香港獨旅</span>。
+          </p>
+          <p>
+            出發前，為了處理掉手頭上那張多出來的演唱會門票，我在網路上詢問有沒有人想收，願意<span class="hl-warm">低於原價轉讓</span>。後來，有一位<span class="hl-warm">女生</span>聯繫上我，接手了這張票。
+          </p>
+        </section>
+
+        <!-- 19 -->
+        <section>
+          <p>
+            我們確認了彼此的班機時間，原本只約好到了香港市區再碰面交票。
+          </p>
+          <div class="sub-note warm">
+            她的飛機：從<strong>高雄</strong>飛，<strong>11:50</strong> 抵達香港<br>
+            我的飛機：從<strong>台中</strong>飛，<strong>12:00</strong> 抵達香港
+          </div>
+          <p>
+            結果我一下飛機、往出境大廳走去時，在搭乘電扶梯往下的一小段路，無意間透過身旁的<span class="hl-warm">鏡子反射</span>往後一瞥——
+          </p>
+          <p>
+            我發現站在我身後的那個人，<span class="hl-warm">竟然就是她！</span><br>
+            明明從不同城市起飛，卻能在這麼大的香港機場裡一前一後走在同一個電扶梯上，我當下直接轉過身與她相認。
+          </p>
+        </section>
+
+        <!-- 20 -->
+        <section>
+          <p>
+            到了市區交完票、簡單休息小聊片刻後，因為門票只有一張，我們便各自道別——她去聽演唱會，我則開始走自己的獨旅行程。
+          </p>
+          <p>
+            我心想，這場如同電影般的巧合，<span class="hl-warm">本來應該就這樣結束了。</span>
+          </p>
+        </section>
+      </div>
+      <div class="card-footer">
+        <span>《供養與真愛・後續》</span>
+        <span>6 / 7</span>
+      </div>
+    </article>
+
+    <!-- ==================== 第 7 張 A4 圖卡（後續篇：重逢） ==================== -->
+    <article class="a4-card">
+      <div class="card-body">
+        <!-- 21 -->
+        <section>
+          <p>
+            結果隔天一早，我先去了一趟<span class="hl-warm">黃大仙廟</span>拜拜。<br>
+            接近中午時，我隨意走進一間香港在地的<span class="hl-warm">燒臘店</span>吃飯。
+          </p>
+          <p>
+            香港餐廳有著獨特的「<span class="hl-warm">併桌文化</span>」。<br>
+            就在我點完餐之後，店員突然領著一位客人走進來，順手安排坐在我身旁的空位——
+          </p>
+          <p>
+            我轉頭一看，<span class="hl-warm">那個人竟然又是她！</span>
+          </p>
+        </section>
+
+        <!-- 22 -->
+        <section>
+          <p>
+            <span class="hl-warm">緣分就是這麼不可思議。</span>
+          </p>
+          <p>
+            先是在偌大的香港機場裡一前一後相遇；隔天毫無約定，又在茫茫人海的街頭小店裡，被店員帶位併在同一張餐桌。
+          </p>
+          <p>
+            我們相視而笑，就這樣一邊吃著飯、一邊自然地聊了起來。<br>
+            至於聊了些什麼，那些細節就留在那天的香港吧。
+          </p>
+        </section>
+
+        <!-- 23 -->
+        <section>
+          <p>
+            這段不期而遇的<span class="hl-warm">浪漫</span>，讓整趟旅程的我<span class="hl-warm">突然心情大好</span>，原本心裡的陰霾也瞬間一掃而空。
+          </p>
+          <p>
+            最後，我帶著久違的好心情回到台中。<br>
+            <span class="hl-warm">希望這是一個好的開始！</span>
+          </p>
+          <div class="end-mark">—— END ——</div>
+        </section>
+      </div>
+      <div class="card-footer">
+        <span>《供養與真愛・後續》</span>
+        <span>7 / 7</span>
+      </div>
+    </article>
+
   </main>
 
   <script>
@@ -482,11 +729,13 @@
     const errorMsg = document.getElementById('error-msg');
     const authOverlay = document.getElementById('auth-overlay');
     const mainContent = document.getElementById('main-content');
+    const downloadBtn = document.getElementById('download-btn');
 
     function checkPassword() {
       if (pwdInput.value === '0717') {
         authOverlay.style.display = 'none';
-        mainContent.style.display = 'block';
+        mainContent.style.display = 'flex';
+        downloadBtn.style.display = 'inline-flex';
       } else {
         errorMsg.style.display = 'block';
         pwdInput.value = '';
@@ -499,6 +748,49 @@
     pwdInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         checkPassword();
+      }
+    });
+
+    // 依序下載多張 A4 圖卡（檔名：1.png ~ 7.png）
+    downloadBtn.addEventListener('click', async () => {
+      const cards = document.querySelectorAll('.a4-card');
+      const originalText = downloadBtn.innerText;
+      downloadBtn.disabled = true;
+
+      try {
+        // 強制套用標準 A4 尺寸（794px x 1123px），不受手機螢幕影響
+        mainContent.classList.add('exporting');
+
+        for (let i = 0; i < cards.length; i++) {
+          const fileIndex = i + 1;
+          downloadBtn.innerText = `正在產生第 ${fileIndex} / ${cards.length} 張...`;
+
+          const canvas = await html2canvas(cards[i], {
+            backgroundColor: '#10131a',
+            scale: 2, // 2倍高解析度（1588px x 2246px）
+            width: 794,
+            height: 1123,
+            windowWidth: 1200,
+            useCORS: true
+          });
+
+          const link = document.createElement('a');
+          link.download = `${fileIndex}.png`;
+          link.href = canvas.toDataURL('image/png');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          // 間隔 350ms 避免瀏覽器阻擋連續多檔案下載
+          await new Promise(resolve => setTimeout(resolve, 350));
+        }
+      } catch (err) {
+        alert('圖卡產生過程發生錯誤，請稍後再試。');
+        console.error(err);
+      } finally {
+        mainContent.classList.remove('exporting');
+        downloadBtn.disabled = false;
+        downloadBtn.innerText = originalText;
       }
     });
   </script>
